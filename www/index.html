@@ -37,7 +37,8 @@
               <h1 class="title">Select a channel</h1>
             </ion-header-bar>
             <ion-content>
-              <ion-list>
+              <progress ng-show="loading"></progress>
+              <ion-list ng-show="!loading">
                 <ion-item ng-click="channelSelected($event, channel)" ng-repeat="channel in channels">
                   {{channel.name}}
                 </ion-item>
@@ -58,8 +59,8 @@
       </ion-list>
     </ion-content>
     <ion-footer-bar class="bar-stable" ng-controller="FooterController">
-      <input type="text" placeholder="Message" />
-      <button class="button button-positive pull-right">
+      <input ng-model="message" type="text" placeholder="Message" />
+      <button class="button button-positive pull-right" ng-click="postMessage($event)">
         Send
       </button>
     </ion-footer-bar>
