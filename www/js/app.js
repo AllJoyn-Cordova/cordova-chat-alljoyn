@@ -1,11 +1,6 @@
-// Ionic Starter App
+var chatApp = angular.module('chatApp', ['ionic']);
 
-// angular.module is a global place for creating, registering and retrieving Angular modules
-// 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
-// the 2nd parameter is an array of 'requires'
-angular.module('starter', ['ionic'])
-
-.run(function($ionicPlatform) {
+chatApp.run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
     // for form inputs)
@@ -16,4 +11,28 @@ angular.module('starter', ['ionic'])
       StatusBar.styleDefault();
     }
   });
-})
+});
+
+chatApp.controller('HeaderController', function($scope, $ionicPopover, $ionicModal) {
+  $scope.subheader = '(No Channel)';
+
+  $ionicPopover.fromTemplateUrl('channel-selector.html', { scope: $scope }).then(function(popover) {
+    $scope.popover = popover;
+  });
+  $scope.openChannelSelector = function($event) {
+    $scope.channels = [ { name: 'My Channel' }, { name: 'Another' } ];
+    $scope.popover.show($event);
+  }
+
+  $scope.channelSelected = function($event, channel) {
+    $scope.subheader = channel.name;
+    $scope.popover.hide();
+  }
+});
+
+chatApp.controller('ContentController', function($scope) {
+  $scope.messages = [];
+});
+
+chatApp.controller('FooterController', function($scope) {
+});

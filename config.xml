@@ -2,11 +2,11 @@
 <widget id="com.ionicframework.alljoyncordovachat703162" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
   <name>AllJoynCordovaChat</name>
   <description>
-        An Ionic Framework and Cordova project.
-    </description>
-  <author email="hi@ionicframework" href="http://ionicframework.com/">
-      Ionic Framework Team
-    </author>
+        A chat app that uses the Cordova AllJoyn plugin.
+  </description>
+  <author email="ville.rantala@iki.fi" href="http://vjrantal.net/">
+    Ville Rantala
+  </author>
   <content src="index.html"/>
   <access origin="*"/>
   <preference name="webviewbounce" value="false"/>
