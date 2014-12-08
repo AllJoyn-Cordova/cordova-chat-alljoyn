@@ -1,16 +1,9 @@
 var chatApp = angular.module('chatApp');
 
-chatApp.controller('FooterController', function($rootScope, $scope, chatService) {
-  $scope.postMessage = function($event) {
-    chatService.postCurrentChannel( { text: $scope.message } ); 
-    $scope.message = '';
-  };
-});
-
 chatApp.factory('chatService', function($rootScope, $q) {
   var chatService = {};
 
-  var messages = [ { text: 'Some text' } ];
+  var messages = [ { text: 'Mockup chat message' } ];
   var currentChannelMessages = function() {
     return messages;
   };

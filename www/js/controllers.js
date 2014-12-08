@@ -30,3 +30,10 @@ chatApp.controller('ContentController', function($rootScope, $scope, chatService
       $scope.messages = chatService.currentChannelMessages();
   });
 });
+
+chatApp.controller('FooterController', function($rootScope, $scope, chatService) {
+  $scope.postMessage = function($event) {
+    chatService.postCurrentChannel( { text: $scope.message } ); 
+    $scope.message = '';
+  };
+});
