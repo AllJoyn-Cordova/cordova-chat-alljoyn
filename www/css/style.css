@@ -2,3 +2,9 @@
 body {
   -ms-content-zooming: none;
 }
+
+.message-body {
+}
+.message-header {
+  font-style: italic;
+}

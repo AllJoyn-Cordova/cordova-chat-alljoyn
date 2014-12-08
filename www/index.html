@@ -56,7 +56,8 @@
     <ion-content class="has-header has-footer has-subheader" has-bouncing="false" ng-controller="ContentController">
       <ion-list>
         <ion-item ng-repeat="message in messages">
-          {{message.text}}
+          <div class="message-header">{{message.nickname}} wrote:</div>
+          <div class="message-body">{{message.text}}</div>
         </ion-item>
       </ion-list>
     </ion-content>

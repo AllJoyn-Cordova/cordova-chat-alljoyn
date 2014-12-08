@@ -1,7 +1,7 @@
 var chatApp = angular.module('chatApp');
 
 chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopover, chatService) {
-  $scope.subheader = chatService.currentChannel();
+  $scope.subheader = chatService.currentChannel() || '(no channel)';
 
   $ionicPopover.fromTemplateUrl('channel-selector.html', { scope: $scope }).then(function(popover) {
     $scope.popover = popover;
@@ -29,9 +29,12 @@ chatApp.controller('ContentController', function($rootScope, $scope, chatService
   $rootScope.$on('newMessage', function (event, data) {
       $scope.messages = chatService.currentChannelMessages();
   });
+  $rootScope.$on('currentChannelChanged', function (event, channel) {
+      $scope.messages = chatService.currentChannelMessages();
+  });
 });
 
-chatApp.controller('FooterController', function($rootScope, $scope, chatService) {
+chatApp.controller('FooterController', function($rootScope, $scope, $ionicPopup, chatService) {
   $scope.postMessage = function($event) {
     // Internet Explorer fires both touch events and pointer events
     // which results into landing into this handler twice per tap.
@@ -39,8 +42,19 @@ chatApp.controller('FooterController', function($rootScope, $scope, chatService)
     // so using it to filter duplicates even though that might not be
     // extremely future proof way of handling this.
     if ($event.isIonicTap) {
-      chatService.postCurrentChannel( { text: $scope.message } ); 
-      $scope.message = '';
+      if (chatService.currentChannel() == null) {
+        // Can't post if not on channel
+        $ionicPopup.alert({
+          title: 'Select a channel first'
+        }).then(function(result) {
+          // If something is needed after popup closed
+        });
+      } else {
+        if ($scope.message) {
+          chatService.postCurrentChannel(new Message($scope.message));
+          $scope.message = '';
+        }
+      }
     }
   };
 });

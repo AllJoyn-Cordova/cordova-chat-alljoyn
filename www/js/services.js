@@ -3,23 +3,34 @@ var chatApp = angular.module('chatApp');
 chatApp.factory('chatService', function($rootScope, $q) {
   var chatService = {};
 
-  var messages = [ { text: 'Mockup chat message' } ];
+  var channelsModel = {
+    channels: [],
+    currentChannel: null,
+    getChannel: function(name) {
+      for (var i = 0; i < this.channels.length; i++) {
+        if (this.channels[i].name = name) return this.channels[i];
+      }
+    }
+  };
+  
+  channelsModel.channels.push(new Channel('My Channel'));
+  channelsModel.channels.push(new Channel('Another Channel'));
+
   var currentChannelMessages = function() {
-    return messages;
+    return channelsModel.currentChannel && channelsModel.currentChannel.messages || [];
   };
   chatService.currentChannelMessages = currentChannelMessages;
-  
-  var currentChannel = '(No Channel)';
+
   chatService.currentChannel = function() {
-    return currentChannel;
+    return channelsModel.currentChannel;
   };
   chatService.setCurrentChannel = function(channel) {
-    currentChannel = channel;
+    channelsModel.currentChannel = channel;
     $rootScope.$broadcast('currentChannelChanged', channel);
   };
-  
+
   chatService.postCurrentChannel = function(message) {
-    messages.push(message);
+    channelsModel.currentChannel.messages.push(message);
     $rootScope.$broadcast('newMessage', message);
   };
 
@@ -27,7 +38,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
     var deferred = $q.defer();
     setTimeout(function() {
       if (true) {
-        deferred.resolve([ { name: 'My Channel' }, { name: 'Another' } ]);
+        deferred.resolve(channelsModel.channels);
       } else {
         // This would be when unable to fetch channels
         deferred.reject([]);
