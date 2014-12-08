@@ -33,7 +33,14 @@ chatApp.controller('ContentController', function($rootScope, $scope, chatService
 
 chatApp.controller('FooterController', function($rootScope, $scope, chatService) {
   $scope.postMessage = function($event) {
-    chatService.postCurrentChannel( { text: $scope.message } ); 
-    $scope.message = '';
+    // Internet Explorer fires both touch events and pointer events
+    // which results into landing into this handler twice per tap.
+    // The isIonicTap property is not true for the duplicate event
+    // so using it to filter duplicates even though that might not be
+    // extremely future proof way of handling this.
+    if ($event.isIonicTap) {
+      chatService.postCurrentChannel( { text: $scope.message } ); 
+      $scope.message = '';
+    }
   };
 });
