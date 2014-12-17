@@ -18,9 +18,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
       ""
     ];
     var AJ_CHAT_INTERFACES = [AJ_CHAT_INTERFACE, null];
-    var AJ_CONNECT_TIMEOUT = (1000 * 5);
-    var AJ_UNMARSHAL_TIMEOUT = (1000 * 0.5);
-    var AJ_METHOD_TIMEOUT = (100 * 10);
+    var AJ_CONNECT_TIMEOUT = 1000 * 5;
 
     var aj_busAttachment = new AllJoynWinRTComponent.AJ_BusAttachment();
     var aj_sessionId = 0;
@@ -33,12 +31,12 @@ chatApp.factory('chatService', function($rootScope, $q) {
     AllJoynWinRTComponent.AllJoyn.aj_RegisterObjects(null, [aj_appObject, null]);
 
     var aj_daemonName = "";
-    var startClientReturnObject = AllJoynWinRTComponent.AllJoyn.aj_StartClient(aj_busAttachment, aj_daemonName, AJ_CONNECT_TIMEOUT, false, AJ_CHAT_SERVICE_NAME, AJ_CHAT_SERVICE_PORT, null, null);
-    if (startClientReturnObject.__returnValue == AllJoynWinRTComponent.AJ_Status.aj_OK) {
-      console.log("Start client succeeded.");
-      aj_sessionId = startClientReturnObject.sessionId;
+    var aj_status = AllJoynWinRTComponent.AllJoyn.aj_FindBusAndConnect(aj_busAttachment, aj_daemonName, AJ_CONNECT_TIMEOUT);
+    if (aj_status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
+      console.log('Found bus and connected.');
+      AllJoynMessageHandler.start(aj_busAttachment);
     } else {
-      console.log("Start client failed.");
+      console.log('Could not connect to the bus.');
     }
   }
 
@@ -63,8 +61,23 @@ chatApp.factory('chatService', function($rootScope, $q) {
     return channelsModel.currentChannel;
   };
   chatService.setCurrentChannel = function(channel) {
-    channelsModel.currentChannel = channel;
-    $rootScope.$broadcast('currentChannelChanged', channel);
+    if (aj_sessionId !== 0) {
+      // TODO: Call leave session
+    }
+    // Use null value as session options, which means that AllJoyn will use the default options
+    var aj_sessionOptions = null;
+    var aj_status = AllJoynWinRTComponent.AllJoyn.aj_BusJoinSession(aj_busAttachment, AJ_CHAT_SERVICE_NAME + channel.name, AJ_CHAT_SERVICE_PORT, aj_sessionOptions);
+    if (aj_status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
+      AllJoynMessageHandler.addHandler(
+        AllJoynWinRTComponent.AllJoyn.aj_Reply_ID(AllJoynWinRTComponent.AllJoyn.aj_Bus_Message_ID(1, 0, 10)),
+        function(value) {
+          console.log("Joined session: " + value);
+          // TODO: Get session id from the reply
+        }
+      );
+      channelsModel.currentChannel = channel;
+      $rootScope.$broadcast('currentChannelChanged', channel);
+    }
   };
 
   chatService.postCurrentChannel = function(message) {
@@ -99,63 +112,49 @@ chatApp.factory('chatService', function($rootScope, $q) {
 
   chatService.getChannels = function() {
     var deferred = $q.defer();
-    setTimeout(function() {
-      if (true) {
-        if (window.AllJoyn) {
-          // TODO: Fetch channels from AllJoyn
-          channelsModel.channels = [new Channel('Random Channel')];
-        } else {
-          channelsModel.channels = [new Channel('My Channel'), new Channel('Another Channel')];
+    if (window.AllJoyn) {
+      var AJ_BUS_START_FINDING = 0;
+      var AJ_BUS_STOP_FINDING = 1;
+      var aj_status = AllJoynWinRTComponent.AllJoyn.aj_BusFindAdvertisedName(aj_busAttachment, AJ_CHAT_SERVICE_NAME, AJ_BUS_START_FINDING);
+      AllJoynMessageHandler.addHandler(
+        AllJoynWinRTComponent.AllJoyn.aj_Bus_Message_ID(1, 0, 1),
+        function(value) {
+          channelName = value.split('.').pop();
+          channelsModel.channels = [new Channel(channelName)];
+          AllJoynWinRTComponent.AllJoyn.aj_BusFindAdvertisedName(aj_busAttachment, AJ_CHAT_SERVICE_NAME, AJ_BUS_STOP_FINDING);
+          deferred.resolve(channelsModel.channels);
         }
+      );
+    } else {
+      setTimeout(function() {
+        channelsModel.channels = [new Channel('My Channel'), new Channel('Another Channel')];
         deferred.resolve(channelsModel.channels);
-      } else {
-        // This would be when unable to fetch channels
-        deferred.reject([]);
-      }
-    }, 500);
+      }, 100);
+    }
     return deferred.promise;
   };
 
-  // Loop to check for new chat messages
-  setInterval(function() {
-    // Return if we are not in a channel
-    if (channelsModel.currentChannel == null) return;
-
-    if (window.AllJoyn) {
-      var aj_message = new AllJoynWinRTComponent.AJ_Message();
-      var status = AllJoynWinRTComponent.AllJoyn.aj_UnmarshalMsg(aj_busAttachment, aj_message, AJ_UNMARSHAL_TIMEOUT);
-
-      if (status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
-        var aj_messageId = AllJoynWinRTComponent.AllJoyn.aj_Prx_Message_ID(0, 0, 0);
-        var aj_receivedMessageId = AllJoynWinRTComponent.AllJoyn.get_AJ_Message_msgId(aj_message);
-        if (aj_receivedMessageId == aj_messageId) {
-          var aj_arg = new AllJoynWinRTComponent.AJ_Arg();
-          status = AllJoynWinRTComponent.AllJoyn.aj_UnmarshalArg(aj_message, aj_arg);
-          var messageText = AllJoynWinRTComponent.AllJoyn.get_AJ_Arg_v_string(aj_arg);
-
-          var message = new Message(messageText);
-
-          AllJoynWinRTComponent.AllJoyn.aj_CloseArg(aj_arg);
-        }
+  if (window.AllJoyn) {
+    // Handler for new chat messages
+    AllJoynMessageHandler.addHandler(
+      // Message id for new messages to the interface we have defined
+      AllJoynWinRTComponent.AllJoyn.aj_Prx_Message_ID(0, 0, 0),
+      function(value) {
+        console.log("Received message: " + value);
+        if (channelsModel.currentChannel == null) return;
+        var message = new Message(value);
+        // The $rootScope needs to be accessed in a non-standard way
+        // inside of the function run within setInterval or otherwise things
+        // don't work correctly.
+        // Approach taken from http://stackoverflow.com/questions/24595460/how-to-access-update-rootscope-from-outside-angular .
+        var $rootScope = angular.element(document.body).scope().$root;
+        $rootScope.$apply(function() {
+          channelsModel.currentChannel.messages.push(message);
+          $rootScope.$broadcast('newMessage', message);
+        });
       }
-      AllJoynWinRTComponent.AllJoyn.aj_CloseMsg(aj_message);
-    } else {
-      var message = new Message('Dummy message');
-    }
-
-    if (typeof message == 'object') {
-      // The $rootScope needs to be accessed in a non-standard way
-      // inside of the function run within setInterval or otherwise things
-      // don't work correctly.
-      // Approach taken from http://stackoverflow.com/questions/24595460/how-to-access-update-rootscope-from-outside-angular .
-      var $rootScope = angular.element(document.body).scope().$root;
-      $rootScope.$apply(function() {
-        channelsModel.currentChannel.messages.push(message);
-        console.log(channelsModel.currentChannel.messages.length);
-        $rootScope.$broadcast('newMessage', message);
-      });
-    }
-  }, 1000);
+    );
+  }
 
   return chatService;
 });
