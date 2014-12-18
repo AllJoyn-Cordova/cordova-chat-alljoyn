@@ -1,4 +1,16 @@
-﻿(function() {
+﻿/*
+ * An AllJoyn message handler that is made available to a global variable AllJoynMessageHandler.
+ *
+ * To use the handler, you must have first connected to an AllJoyn bus. After that, you can call:
+ *
+ * AllJoynMessageHandler.start(<your bus attachment>);
+ *
+ * To register handlers, you call the addHandler by passing the message ids you are interested and
+ * the callback function that gets called if such messages arrive:
+ *
+ * AllJoynMessageHandler.addHandler(<interesting message id>, function(value) { // handle the value });
+ */
+(function() {
   // Use 0 as unmarshal timeout so that we don't end up blocking
   // the UI while waiting for new messages
   var AJ_UNMARSHAL_TIMEOUT = 0;
