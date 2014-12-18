@@ -1,14 +1,20 @@
 ﻿/*
  * An AllJoyn message handler that is made available to a global variable AllJoynMessageHandler.
  *
- * To use the handler, you must have first connected to an AllJoyn bus. After that, you can call:
+ * To use the handler, you must have first connected to an AllJoyn bus. The handler is then started
+ * by passing a reference to your bus attachment.
  *
  * AllJoynMessageHandler.start(<your bus attachment>);
  *
- * To register handlers, you call the addHandler by passing the message ids you are interested and
- * the callback function that gets called if such messages arrive:
+ * To register handlers, you call the addHandler by passing the message ids you are interested,
+ * the signature of your message and the callback function that gets called if such messages arrive.
+ * The signature is an AllJoyn-specific value that is used to unmarshal the contents of the message.
  *
- * AllJoynMessageHandler.addHandler(<interesting message id>, function(value) { // handle the value });
+ * AllJoynMessageHandler.addHandler(<interesting message id>,
+ *                                  <return value signature>
+ *                                  function(returnObject) {
+ *                                    // handle the returnObject
+ *                                  });
  */
 (function() {
   // Use 0 as unmarshal timeout so that we don't end up blocking
@@ -46,23 +52,18 @@
       }
     }
     var handlerFunction = function() {
-      console.log(new Date());
       var aj_message = new AllJoynWinRTComponent.AJ_Message();
       AllJoynWinRTComponent.AllJoyn.aj_UnmarshalMsg(busAttachment, aj_message, AJ_UNMARSHAL_TIMEOUT).done(function(status) {
         if (status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
           var aj_receivedMessageId = AllJoynWinRTComponent.AllJoyn.get_AJ_Message_msgId(aj_message);
           // Check if we have listeners for this message id
           if (messageListeners[aj_receivedMessageId]) {
-            // Unmarshal the message value
-            var aj_arg = new AllJoynWinRTComponent.AJ_Arg();
-            status = AllJoynWinRTComponent.AllJoyn.aj_UnmarshalArg(aj_message, aj_arg);
-            var returnValue = AllJoynWinRTComponent.AllJoyn.get_AJ_Arg_v_string(aj_arg);
-            AllJoynWinRTComponent.AllJoyn.aj_CloseArg(aj_arg);
-
             // Pass the value to listeners
             var callbacks = messageListeners[aj_receivedMessageId];
             for (var i = 0; i < callbacks.length; i++) {
-              callbacks[i](returnValue);
+              // Unmarshal the message value
+              var returnValue = AllJoynWinRTComponent.AllJoyn.aj_UnmarshalArgs(aj_message, callbacks[i][0]);
+              callbacks[i][1](returnValue);
             }
           }
         }
@@ -79,19 +80,19 @@
     clearInterval(interval);
   }
 
-  messageHandler.addHandler = function(messageId, callback) {
+  messageHandler.addHandler = function(messageId, signature, callback) {
     // Create a list of handlers for this message id if it doesn't exist yet
     if (typeof messageListeners[messageId] != "object") {
       messageListeners[messageId] = [];
     }
-    messageListeners[messageId].push(callback);
+    messageListeners[messageId].push([signature, callback]);
   }
 
   messageHandler.removeHandler = function(messageId, callback) {
     messageListeners[messageId] = messageListeners[messageId].filter(
       function(element) {
         // Filter out the given callback function
-        return element !== callback
+        return (element[1] !== callback);
       }
     );
   }

@@ -61,6 +61,10 @@ chatApp.factory('chatService', function($rootScope, $q) {
     return channelsModel.currentChannel;
   };
   chatService.setCurrentChannel = function(channel) {
+    // No need to do anything if channel set to the current channel
+    if (channelsModel.currentChannel != null && channel.name == channelsModel.currentChannel.name) {
+      return;
+    }
     if (aj_sessionId !== 0) {
       // TODO: Call leave session
     }
@@ -68,11 +72,13 @@ chatApp.factory('chatService', function($rootScope, $q) {
     var aj_sessionOptions = null;
     var aj_status = AllJoynWinRTComponent.AllJoyn.aj_BusJoinSession(aj_busAttachment, AJ_CHAT_SERVICE_NAME + channel.name, AJ_CHAT_SERVICE_PORT, aj_sessionOptions);
     if (aj_status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
+      var joinSessionReplyId = AllJoynWinRTComponent.AllJoyn.aj_Reply_ID(AllJoynWinRTComponent.AllJoyn.aj_Bus_Message_ID(1, 0, 10));
       AllJoynMessageHandler.addHandler(
-        AllJoynWinRTComponent.AllJoyn.aj_Reply_ID(AllJoynWinRTComponent.AllJoyn.aj_Bus_Message_ID(1, 0, 10)),
-        function(value) {
-          console.log("Joined session: " + value);
-          // TODO: Get session id from the reply
+        joinSessionReplyId, 'uu',
+        function(returnObject) {
+          aj_sessionId = returnObject[2];
+          console.log('Joined a session with id: ' + aj_sessionId);
+          AllJoynMessageHandler.removeHandler(joinSessionReplyId, this[1]);
         }
       );
       channelsModel.currentChannel = channel;
@@ -116,12 +122,15 @@ chatApp.factory('chatService', function($rootScope, $q) {
       var AJ_BUS_START_FINDING = 0;
       var AJ_BUS_STOP_FINDING = 1;
       var aj_status = AllJoynWinRTComponent.AllJoyn.aj_BusFindAdvertisedName(aj_busAttachment, AJ_CHAT_SERVICE_NAME, AJ_BUS_START_FINDING);
+      var foundAdvertisedNameMessageId = AllJoynWinRTComponent.AllJoyn.aj_Bus_Message_ID(1, 0, 1);
       AllJoynMessageHandler.addHandler(
-        AllJoynWinRTComponent.AllJoyn.aj_Bus_Message_ID(1, 0, 1),
-        function(value) {
-          channelName = value.split('.').pop();
+        foundAdvertisedNameMessageId, 's',
+        function(returnObject) {
+          channelName = returnObject[1].split('.').pop();
+          console.log('Found channel with name: ' + channelName);
           channelsModel.channels = [new Channel(channelName)];
           AllJoynWinRTComponent.AllJoyn.aj_BusFindAdvertisedName(aj_busAttachment, AJ_CHAT_SERVICE_NAME, AJ_BUS_STOP_FINDING);
+          AllJoynMessageHandler.removeHandler(foundAdvertisedNameMessageId, this[1]);
           deferred.resolve(channelsModel.channels);
         }
       );
@@ -138,11 +147,11 @@ chatApp.factory('chatService', function($rootScope, $q) {
     // Handler for new chat messages
     AllJoynMessageHandler.addHandler(
       // Message id for new messages to the interface we have defined
-      AllJoynWinRTComponent.AllJoyn.aj_Prx_Message_ID(0, 0, 0),
-      function(value) {
-        console.log("Received message: " + value);
+      AllJoynWinRTComponent.AllJoyn.aj_Prx_Message_ID(0, 0, 0), 's',
+      function(returnObject) {
+        console.log("Received message: " + returnObject);
         if (channelsModel.currentChannel == null) return;
-        var message = new Message(value);
+        var message = new Message(returnObject[1]);
         // The $rootScope needs to be accessed in a non-standard way
         // inside of the function run within setInterval or otherwise things
         // don't work correctly.
