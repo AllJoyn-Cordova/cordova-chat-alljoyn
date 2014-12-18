@@ -66,7 +66,13 @@ chatApp.factory('chatService', function($rootScope, $q) {
       return;
     }
     if (aj_sessionId !== 0) {
-      // TODO: Call leave session
+      var aj_status = AllJoynWinRTComponent.AllJoyn.aj_BusLeaveSession(aj_busAttachment, aj_sessionId);
+      if (aj_status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
+        console.log('Leaving a session with id: ' + aj_sessionId);
+        aj_sessionId = 0;
+      } else {
+        console.log('Failed to leave a session with id: ' + aj_sessionId);
+      }
     }
     // Use null value as session options, which means that AllJoyn will use the default options
     var aj_sessionOptions = null;
