@@ -33,25 +33,26 @@
     <div ng-controller="HeaderController">
       <ion-header-bar class="bar-positive" no-tap-scroll="true">
         <h1 class="title">AllJoyn Chat</h1>
-        <button class="button pull-right" ng-click="openChannelSelector($event)">Channels</button>
-        <script id="channel-selector.html" type="text/ng-template">
-          <ion-popover-view>
-            <ion-header-bar>
-              <h1 class="title">Select a channel</h1>
-            </ion-header-bar>
-            <ion-content>
-              <progress ng-show="loading"></progress>
-              <ion-list ng-show="!loading">
-                <ion-item ng-click="channelSelected($event, channel)" ng-repeat="channel in channels">
-                  {{channel.name}}
-                </ion-item>
-              </ion-list>
-            </ion-content>
-          </ion-popover-view>
-        </script>
+        <button class="button pull-right" ng-show="!connected" ng-click="connectClicked($event)">Connect</button>
       </ion-header-bar>
       <div class="bar bar-stable bar-subheader" no-tap-scroll="true">
         <h2 class="title">{{subheader}}</h2>
+        <button ng-show="connected" class="button pull-right" ng-click="channelsClicked($event)">Channels</button>
+        <script id="channel-selector.html" type="text/ng-template">
+            <ion-popover-view>
+                <ion-header-bar>
+                    <h1 class="title">Select a channel</h1>
+                </ion-header-bar>
+                <ion-content>
+                    <progress ng-show="loading"></progress>
+                    <ion-list ng-show="!loading">
+                        <ion-item ng-click="channelSelected($event, channel)" ng-repeat="channel in channels">
+                            {{channel.name}}
+                        </ion-item>
+                    </ion-list>
+                </ion-content>
+            </ion-popover-view>
+        </script>
       </div>
     </div>
     <ion-content class="has-header has-footer has-subheader" has-bouncing="false" ng-controller="ContentController">

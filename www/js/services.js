@@ -29,18 +29,31 @@ chatApp.factory('chatService', function($rootScope, $q) {
     aj_appObject.path = AJ_CHAT_SERVICE_PATH;
     aj_appObject.interfaces = AJ_CHAT_INTERFACES;
     AllJoynWinRTComponent.AllJoyn.aj_RegisterObjects(null, [aj_appObject, null]);
-
-    var aj_daemonName = "";
-    var aj_status = AllJoynWinRTComponent.AllJoyn.aj_FindBusAndConnect(aj_busAttachment, aj_daemonName, AJ_CONNECT_TIMEOUT);
-    if (aj_status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
-      console.log('Found bus and connected.');
-      AllJoynMessageHandler.start(aj_busAttachment);
-    } else {
-      console.log('Could not connect to the bus.');
-    }
   }
 
   var chatService = {};
+
+  chatService.connect = function() {
+    var deferred = $q.defer();
+    if (window.AllJoyn) {
+      var aj_daemonName = "";
+      var aj_status = AllJoynWinRTComponent.AllJoyn.aj_FindBusAndConnect(aj_busAttachment, aj_daemonName, AJ_CONNECT_TIMEOUT);
+      if (aj_status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
+        console.log('Found bus and connected.');
+        AllJoynMessageHandler.start(aj_busAttachment);
+        deferred.resolve();
+      } else {
+        console.log('Could not connect to the bus. Make sure your network has an AllJoyn router running and accessible to this application.');
+        deferred.reject();
+      }
+    } else {
+      setTimeout(function() {
+        deferred.resolve();
+        //deferred.reject();
+      }, 500);
+    }
+    return deferred.promise;
+  }
 
   var channelsModel = {
     channels: [],
@@ -65,31 +78,33 @@ chatApp.factory('chatService', function($rootScope, $q) {
     if (channelsModel.currentChannel != null && channel.name == channelsModel.currentChannel.name) {
       return;
     }
-    if (aj_sessionId !== 0) {
-      var aj_status = AllJoynWinRTComponent.AllJoyn.aj_BusLeaveSession(aj_busAttachment, aj_sessionId);
+    if (window.AllJoyn) {
+      if (aj_sessionId !== 0) {
+        var aj_status = AllJoynWinRTComponent.AllJoyn.aj_BusLeaveSession(aj_busAttachment, aj_sessionId);
+        if (aj_status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
+          console.log('Leaving a session with id: ' + aj_sessionId);
+          aj_sessionId = 0;
+        } else {
+          console.log('Failed to leave a session with id: ' + aj_sessionId);
+        }
+      }
+      // Use null value as session options, which means that AllJoyn will use the default options
+      var aj_sessionOptions = null;
+      var aj_status = AllJoynWinRTComponent.AllJoyn.aj_BusJoinSession(aj_busAttachment, AJ_CHAT_SERVICE_NAME + channel.name, AJ_CHAT_SERVICE_PORT, aj_sessionOptions);
       if (aj_status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
-        console.log('Leaving a session with id: ' + aj_sessionId);
-        aj_sessionId = 0;
-      } else {
-        console.log('Failed to leave a session with id: ' + aj_sessionId);
+        var joinSessionReplyId = AllJoynWinRTComponent.AllJoyn.aj_Reply_ID(AllJoynWinRTComponent.AllJoyn.aj_Bus_Message_ID(1, 0, 10));
+        AllJoynMessageHandler.addHandler(
+          joinSessionReplyId, 'uu',
+          function(returnObject) {
+            aj_sessionId = returnObject[2];
+            console.log('Joined a session with id: ' + aj_sessionId);
+            AllJoynMessageHandler.removeHandler(joinSessionReplyId, this[1]);
+          }
+        );
       }
     }
-    // Use null value as session options, which means that AllJoyn will use the default options
-    var aj_sessionOptions = null;
-    var aj_status = AllJoynWinRTComponent.AllJoyn.aj_BusJoinSession(aj_busAttachment, AJ_CHAT_SERVICE_NAME + channel.name, AJ_CHAT_SERVICE_PORT, aj_sessionOptions);
-    if (aj_status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
-      var joinSessionReplyId = AllJoynWinRTComponent.AllJoyn.aj_Reply_ID(AllJoynWinRTComponent.AllJoyn.aj_Bus_Message_ID(1, 0, 10));
-      AllJoynMessageHandler.addHandler(
-        joinSessionReplyId, 'uu',
-        function(returnObject) {
-          aj_sessionId = returnObject[2];
-          console.log('Joined a session with id: ' + aj_sessionId);
-          AllJoynMessageHandler.removeHandler(joinSessionReplyId, this[1]);
-        }
-      );
-      channelsModel.currentChannel = channel;
-      $rootScope.$broadcast('currentChannelChanged', channel);
-    }
+    channelsModel.currentChannel = channel;
+    $rootScope.$broadcast('currentChannelChanged', channel);
   };
 
   chatService.postCurrentChannel = function(message) {

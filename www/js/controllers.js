@@ -1,12 +1,11 @@
 var chatApp = angular.module('chatApp');
 
-chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopover, chatService) {
-  $scope.subheader = chatService.currentChannel() || '(no channel)';
+chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopover, $ionicPopup, chatService) {
 
   $ionicPopover.fromTemplateUrl('channel-selector.html', { scope: $scope }).then(function(popover) {
     $scope.popover = popover;
   });
-  $scope.openChannelSelector = function($event) {
+  $scope.channelsClicked = function($event) {
     if ($event.isIonicTap) {
       $scope.loading = true;
       $scope.popover.show($event);
@@ -16,6 +15,27 @@ chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopove
       });
     }
   };
+
+  var connectedSubHeaderTitle = '(no channel)';
+  var notConnectedSubHeaderTitle = '(not connected)';
+  $scope.connected = false;
+  $scope.subheader = notConnectedSubHeaderTitle;
+  $scope.connectClicked = function($event) {
+    if ($event.isIonicTap) {
+      chatService.connect().then(function() {
+        $scope.connected = true;
+        $scope.subheader = connectedSubHeaderTitle;
+        console.log('Connected.');
+      }, function() {
+        $ionicPopup.alert({
+          title: 'Could not connect'
+        });
+        $scope.connected = false;
+        $scope.subheader = notConnectedSubHeaderTitle;
+        console.log('Could not connect.');
+      });
+    }
+  }
 
   $scope.channelSelected = function($event, channel) {
     if ($event.isIonicTap) {
