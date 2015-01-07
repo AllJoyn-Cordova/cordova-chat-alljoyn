@@ -8,12 +8,12 @@
  *
  * To register handlers, you call the addHandler by passing the message ids you are interested,
  * the signature of your message and the callback function that gets called if such messages arrive.
- * The signature is an AllJoyn-specific value that is used to unmarshal the contents of the message.
+ * The signature is an AllJoyn-specific value that is used to unmarshal the body of the message.
  *
  * AllJoynMessageHandler.addHandler(<interesting message id>,
  *                                  <return value signature>
- *                                  function(returnObject) {
- *                                    // handle the returnObject
+ *                                  function(messageObject, messageBody) {
+ *                                    // handle the received message
  *                                  });
  */
 (function() {
@@ -55,15 +55,16 @@
       var aj_message = new AllJoynWinRTComponent.AJ_Message();
       AllJoynWinRTComponent.AllJoyn.aj_UnmarshalMsg(busAttachment, aj_message, AJ_UNMARSHAL_TIMEOUT).done(function(status) {
         if (status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
-          var aj_receivedMessageId = AllJoynWinRTComponent.AllJoyn.get_AJ_Message_msgId(aj_message);
+          var messageObject = aj_message.get();
+          var receivedMessageId = messageObject.msgId;
           // Check if we have listeners for this message id
-          if (messageListeners[aj_receivedMessageId]) {
+          if (messageListeners[receivedMessageId]) {
             // Pass the value to listeners
-            var callbacks = messageListeners[aj_receivedMessageId];
+            var callbacks = messageListeners[receivedMessageId];
             for (var i = 0; i < callbacks.length; i++) {
-              // Unmarshal the message value
-              var returnValue = AllJoynWinRTComponent.AllJoyn.aj_UnmarshalArgs(aj_message, callbacks[i][0]);
-              callbacks[i][1](returnValue);
+              // Unmarshal the message body
+              var messageBody = AllJoynWinRTComponent.AllJoyn.aj_UnmarshalArgs(aj_message, callbacks[i][0]);
+              callbacks[i][1](messageObject, messageBody);
             }
           }
         }

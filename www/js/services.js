@@ -95,8 +95,9 @@ chatApp.factory('chatService', function($rootScope, $q) {
         var joinSessionReplyId = AllJoynWinRTComponent.AllJoyn.aj_Reply_ID(AllJoynWinRTComponent.AllJoyn.aj_Bus_Message_ID(1, 0, 10));
         AllJoynMessageHandler.addHandler(
           joinSessionReplyId, 'uu',
-          function(returnObject) {
-            aj_sessionId = returnObject[2];
+          function(messageObject, messageBody) {
+            console.log("Received message: ", messageObject, messageBody);
+            aj_sessionId = messageBody[2];
             console.log('Joined a session with id: ' + aj_sessionId);
             AllJoynMessageHandler.removeHandler(joinSessionReplyId, this[1]);
           }
@@ -146,8 +147,9 @@ chatApp.factory('chatService', function($rootScope, $q) {
       var foundAdvertisedNameMessageId = AllJoynWinRTComponent.AllJoyn.aj_Bus_Message_ID(1, 0, 1);
       AllJoynMessageHandler.addHandler(
         foundAdvertisedNameMessageId, 's',
-        function(returnObject) {
-          channelName = returnObject[1].split('.').pop();
+        function(messageObject, messageBody) {
+          console.log("Received message: ", messageObject, messageBody);
+          channelName = messageBody[1].split('.').pop();
           console.log('Found channel with name: ' + channelName);
           channelsModel.channels = [new Channel(channelName)];
           AllJoynWinRTComponent.AllJoyn.aj_BusFindAdvertisedName(aj_busAttachment, AJ_CHAT_SERVICE_NAME, AJ_BUS_STOP_FINDING);
@@ -169,10 +171,10 @@ chatApp.factory('chatService', function($rootScope, $q) {
     AllJoynMessageHandler.addHandler(
       // Message id for new messages to the interface we have defined
       AllJoynWinRTComponent.AllJoyn.aj_Prx_Message_ID(0, 0, 0), 's',
-      function(returnObject) {
-        console.log("Received message: " + returnObject);
+      function(messageObject, messageBody) {
+        console.log("Received message: ", messageObject, messageBody);
         if (channelsModel.currentChannel == null) return;
-        var message = new Message(returnObject[1]);
+        var message = new Message(messageBody[1], messageObject.sender);
         // The $rootScope needs to be accessed in a non-standard way
         // inside of the function run within setInterval or otherwise things
         // don't work correctly.
