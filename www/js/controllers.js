@@ -1,3 +1,12 @@
+// This is a workaround for ng-click handlers getting called twice.
+// Issue reported at https://github.com/driftyco/ionic/issues/2885
+window.addEventListener('click', function(event) {
+  if (Object.prototype.toString.call(event) == '[object PointerEvent]') {
+    event.stopPropagation();
+  }
+}
+, true);
+
 var chatApp = angular.module('chatApp');
 
 chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopover, $ionicPopup, chatService) {
@@ -6,14 +15,12 @@ chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopove
     $scope.popover = popover;
   });
   $scope.channelsClicked = function($event) {
-    if ($event.isIonicTap) {
-      $scope.loading = true;
-      $scope.popover.show($event);
-      chatService.getChannels().then(function(channels) {
-        $scope.loading = false;
-        $scope.channels = channels;
-      });
-    }
+    $scope.loading = true;
+    $scope.popover.show($event);
+    chatService.getChannels().then(function(channels) {
+      $scope.loading = false;
+      $scope.channels = channels;
+    });
   };
 
   var connectedSubHeaderTitle = '(no channel)';
@@ -21,27 +28,23 @@ chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopove
   $scope.connected = false;
   $scope.subheader = notConnectedSubHeaderTitle;
   $scope.connectClicked = function($event) {
-    if ($event.isIonicTap) {
-      chatService.connect().then(function() {
-        $scope.connected = true;
-        $scope.subheader = connectedSubHeaderTitle;
-        console.log('Connected.');
-      }, function() {
-        $ionicPopup.alert({
-          title: 'Could not connect'
-        });
-        $scope.connected = false;
-        $scope.subheader = notConnectedSubHeaderTitle;
-        console.log('Could not connect.');
+    chatService.connect().then(function() {
+      $scope.connected = true;
+      $scope.subheader = connectedSubHeaderTitle;
+      console.log('Connected.');
+    }, function() {
+      $ionicPopup.alert({
+        title: 'Could not connect'
       });
-    }
+      $scope.connected = false;
+      $scope.subheader = notConnectedSubHeaderTitle;
+      console.log('Could not connect.');
+    });
   }
 
   $scope.channelSelected = function($event, channel) {
-    if ($event.isIonicTap) {
-      chatService.setCurrentChannel(channel);
-      $scope.popover.hide();
-    }
+    chatService.setCurrentChannel(channel);
+    $scope.popover.hide();
   };
   $rootScope.$on('currentChannelChanged', function(event, channel) {
     $scope.subheader = channel.name;
@@ -60,24 +63,17 @@ chatApp.controller('ContentController', function($rootScope, $scope, chatService
 
 chatApp.controller('FooterController', function($rootScope, $scope, $ionicPopup, chatService) {
   $scope.postMessage = function($event) {
-    // Internet Explorer fires both touch events and pointer events
-    // which results into landing into this handler twice per tap.
-    // The isIonicTap property is not true for the duplicate event
-    // so using it to filter duplicates even though that might not be
-    // extremely future proof way of handling this.
-    if ($event.isIonicTap) {
-      if (chatService.currentChannel() == null) {
-        // Can't post if not on channel
-        $ionicPopup.alert({
-          title: 'Select a channel first'
-        }).then(function(result) {
-          // If something is needed after popup closed
-        });
-      } else {
-        if ($scope.message) {
-          chatService.postCurrentChannel(new Message($scope.message));
-          $scope.message = '';
-        }
+    if (chatService.currentChannel() == null) {
+      // Can't post if not on channel
+      $ionicPopup.alert({
+        title: 'Select a channel first'
+      }).then(function(result) {
+        // If something is needed after popup closed
+      });
+    } else {
+      if ($scope.message) {
+        chatService.postCurrentChannel(new Message($scope.message));
+        $scope.message = '';
       }
     }
   };
