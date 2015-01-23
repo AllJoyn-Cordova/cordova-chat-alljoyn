@@ -107,7 +107,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
     var deferred = $q.defer();
     if (window.AllJoyn) {
       AllJoyn.startFindingAdvertisedName(function(advertisedName) {
-        channelName = advertisedName.split('.').pop();
+        channelName = advertisedName.name.split('.').pop();
         console.log('Found channel with name: ' + channelName);
         channelsModel.channels = [new Channel(channelName)];
         //AllJoynWinRTComponent.AllJoyn.aj_BusFindAdvertisedName(aj_busAttachment, AJ_CHAT_SERVICE_NAME, AJ_BUS_STOP_FINDING);
