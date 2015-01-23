@@ -10,17 +10,15 @@ window.addEventListener('click', function(event) {
 var chatApp = angular.module('chatApp');
 
 chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopover, $ionicPopup, chatService) {
+  $rootScope.$on('newChannel', function(event, channel) {
+    $scope.channels = chatService.getChannels();
+  });
 
   $ionicPopover.fromTemplateUrl('channel-selector.html', { scope: $scope }).then(function(popover) {
     $scope.popover = popover;
   });
   $scope.channelsClicked = function($event) {
-    $scope.loading = true;
     $scope.popover.show($event);
-    chatService.getChannels().then(function(channels) {
-      $scope.loading = false;
-      $scope.channels = channels;
-    });
   };
 
   var connectedSubHeaderTitle = '(no channel)';
@@ -32,6 +30,7 @@ chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopove
       $scope.connected = true;
       $scope.subheader = connectedSubHeaderTitle;
       console.log('Connected.');
+      chatService.startGettingChannels();
     }, function() {
       $ionicPopup.alert({
         title: 'Could not connect'

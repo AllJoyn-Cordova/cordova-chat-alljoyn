@@ -87,13 +87,12 @@ chatApp.factory('chatService', function($rootScope, $q) {
     }
     if (window.AllJoyn) {
       if (chatSession !== null) {
-        var aj_status = AllJoynWinRTComponent.AllJoyn.aj_BusLeaveSession(aj_busAttachment, aj_sessionId);
-        if (aj_status == AllJoynWinRTComponent.AJ_Status.aj_OK) {
-          console.log('Leaving a session with id: ' + aj_sessionId);
-          aj_sessionId = 0;
-        } else {
-          console.log('Failed to leave a session with id: ' + aj_sessionId);
-        }
+        chatSession.leave(function() {
+          console.log('Leaving a session with id: ' + chatSession.sessionId);
+          chatSession = null;
+        }, function() {
+          console.log('Failed to leave a session with id: ' + chatSession.sessionId);
+        });
       }
 
       AllJoyn.joinSession(function(session) {
@@ -122,24 +121,28 @@ chatApp.factory('chatService', function($rootScope, $q) {
   };
 
   chatService.getChannels = function() {
-    var deferred = $q.defer();
+    return channelsModel.channels;
+  }
+
+  chatService.startGettingChannels = function() {
     if (window.AllJoyn) {
-      AllJoyn.startFindingAdvertisedName(function(advertisedName) {
-        channelName = advertisedName.name.split('.').pop();
-        console.log('Found channel with name: ' + channelName);
-        channelsModel.channels = [new Channel(channelName)];
-        //AllJoynWinRTComponent.AllJoyn.aj_BusFindAdvertisedName(aj_busAttachment, AJ_CHAT_SERVICE_NAME, AJ_BUS_STOP_FINDING);
-        deferred.resolve(channelsModel.channels);
-      }, function(status) {
-        deferred.reject();
-      }, AJ_CHAT_SERVICE_NAME);
-    } else {
-      setTimeout(function() {
-        channelsModel.channels = [new Channel('My Channel'), new Channel('Another Channel')];
-        deferred.resolve(channelsModel.channels);
-      }, 100);
+      AllJoyn.addAdvertisedNameListener(AJ_CHAT_SERVICE_NAME,
+        function(advertisedNameObject) {
+          channelName = advertisedNameObject.name.split('.').pop();
+          console.log('Found channel with name: ' + channelName);
+          var channel = new Channel(channelName);
+          channelsModel.channels.push(channel);
+          $rootScope.$broadcast('newChannel', channel);
+        }
+      );
     }
-    return deferred.promise;
+    else {
+      setTimeout(function() {
+        var channel = new Channel('My Channel');
+        channelsModel.channels.push(channel);
+        $rootScope.$broadcast('newChannel', channel);
+      }, 500);
+    }
   };
 
   return chatService;

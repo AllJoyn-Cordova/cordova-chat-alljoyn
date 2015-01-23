@@ -43,8 +43,8 @@
                     <h1 class="title">Select a channel</h1>
                 </ion-header-bar>
                 <ion-content>
-                    <progress ng-show="loading"></progress>
-                    <ion-list ng-show="!loading">
+                    <progress ng-show="channels.length === 0"></progress>
+                    <ion-list ng-show="channels.length > 0">
                         <ion-item ng-click="channelSelected($event, channel)" ng-repeat="channel in channels">
                             {{channel.name}}
                         </ion-item>
