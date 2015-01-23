@@ -31,8 +31,23 @@ chatApp.factory('chatService', function($rootScope, $q) {
   chatService.connect = function() {
     var deferred = $q.defer();
     if (window.AllJoyn) {
-      AllJoyn.connect(function() {
+      AllJoyn.connect(function(bus) {
         console.log('Found bus and connected.');
+
+        // Handler for new chat messages
+        bus.addListener([2, 0, 0, 0], 's', function(response) {
+          if (channelsModel.currentChannel == null) return;
+          var message = new Message(response);
+          // The $rootScope needs to be accessed in a "non-standard way"
+          // inside of this callback function or otherwise things don't work correctly.
+          // Approach taken from http://stackoverflow.com/questions/24595460/how-to-access-update-rootscope-from-outside-angular .
+          var $rootScope = angular.element(document.body).scope().$root;
+          $rootScope.$apply(function() {
+            channelsModel.currentChannel.messages.push(message);
+            $rootScope.$broadcast('newMessage', message);
+          });
+        });
+
         deferred.resolve();
       }, function(status) {
         console.log('Could not connect to the bus. Make sure your network has an AllJoyn router running and accessible to this application.');
@@ -100,6 +115,9 @@ chatApp.factory('chatService', function($rootScope, $q) {
       }, function(status) {
         console.log('Failed to post to current channel: ' + status);
       }, null, null, [2, 0, 0, 0], "s", [message.text]);
+    } else {
+      channelsModel.currentChannel.messages.push(message);
+      $rootScope.$broadcast('newMessage', message);
     }
   };
 
@@ -123,31 +141,6 @@ chatApp.factory('chatService', function($rootScope, $q) {
     }
     return deferred.promise;
   };
-
-  /*
-  // TODO: Implement on top of common API
-  if (window.AllJoyn) {
-    // Handler for new chat messages
-    AllJoynMessageHandler.addHandler(
-      // Message id for new messages to the interface we have defined
-      AllJoynWinRTComponent.AllJoyn.aj_Prx_Message_ID(0, 0, 0), 's',
-      function(messageObject, messageBody) {
-        console.log("Received message: ", messageObject, messageBody);
-        if (channelsModel.currentChannel == null) return;
-        var message = new Message(messageBody[1], messageObject.sender);
-        // The $rootScope needs to be accessed in a non-standard way
-        // inside of the function run within setInterval or otherwise things
-        // don't work correctly.
-        // Approach taken from http://stackoverflow.com/questions/24595460/how-to-access-update-rootscope-from-outside-angular .
-        var $rootScope = angular.element(document.body).scope().$root;
-        $rootScope.$apply(function() {
-          channelsModel.currentChannel.messages.push(message);
-          $rootScope.$broadcast('newMessage', message);
-        });
-      }
-    );
-  }
-  */
 
   return chatService;
 });
