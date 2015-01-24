@@ -8,6 +8,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
     var AJ_CHAT_SERVICE_PORT = 27;
 
     var chatSession = null;
+    var chatBus = null;
 
     var proxyObjects = [
       {
@@ -32,12 +33,13 @@ chatApp.factory('chatService', function($rootScope, $q) {
     var deferred = $q.defer();
     if (window.AllJoyn) {
       AllJoyn.connect(function(bus) {
+        chatBus = bus;
         console.log('Found bus and connected.');
 
         // Handler for new chat messages
-        bus.addListener([2, 0, 0, 0], 's', function(response) {
+        chatBus.addListener([2, 0, 0, 0], 's', function(response) {
           if (channelsModel.currentChannel == null) return;
-          var message = new Message(response);
+          var message = new Message(response[0]);
           // The $rootScope needs to be accessed in a "non-standard way"
           // inside of this callback function or otherwise things don't work correctly.
           // Approach taken from http://stackoverflow.com/questions/24595460/how-to-access-update-rootscope-from-outside-angular .
@@ -67,7 +69,14 @@ chatApp.factory('chatService', function($rootScope, $q) {
     currentChannel: null,
     getChannel: function(name) {
       for (var i = 0; i < this.channels.length; i++) {
-        if (this.channels[i].name = name) return this.channels[i];
+        if (this.channels[i].name == name) return this.channels[i];
+      }
+    },
+    removeChannel: function(name) {
+      for (var i = 0; i < this.channels.length; i++) {
+        if (this.channels[i].name == name) {
+          this.channels.splice(i, 1);
+        }
       }
     }
   };
@@ -132,15 +141,31 @@ chatApp.factory('chatService', function($rootScope, $q) {
           console.log('Found channel with name: ' + channelName);
           var channel = new Channel(channelName);
           channelsModel.channels.push(channel);
-          $rootScope.$broadcast('newChannel', channel);
+          var $rootScope = angular.element(document.body).scope().$root;
+          $rootScope.$apply(function() {
+            $rootScope.$broadcast('channelsChanged');
+          });
         }
       );
+      //AJ_Signal_Lost_Adv_Name
+      chatBus.addListener([0, 1, 0, 2], 'sqs', function(response) {
+        var channelName = response[0].split('.').pop();
+        channelsModel.removeChannel(channelName);
+        var $rootScope = angular.element(document.body).scope().$root;
+        $rootScope.$apply(function() {
+          $rootScope.$broadcast('channelsChanged');
+          if (channelsModel.currentChannel !== null && channelsModel.currentChannel.name == channelName) {
+            channelsModel.currentChannel = null;
+            $rootScope.$broadcast('currentChannelChanged', null);
+          }
+        });
+      });
     }
     else {
       setTimeout(function() {
         var channel = new Channel('My Channel');
         channelsModel.channels.push(channel);
-        $rootScope.$broadcast('newChannel', channel);
+        $rootScope.$broadcast('channelsChanged');
       }, 500);
     }
   };

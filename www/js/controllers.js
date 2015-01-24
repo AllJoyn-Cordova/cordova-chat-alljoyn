@@ -10,7 +10,8 @@ window.addEventListener('click', function(event) {
 var chatApp = angular.module('chatApp');
 
 chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopover, $ionicPopup, chatService) {
-  $rootScope.$on('newChannel', function(event, channel) {
+  $scope.channels = chatService.getChannels();
+  $rootScope.$on('channelsChanged', function() {
     $scope.channels = chatService.getChannels();
   });
 
@@ -46,7 +47,11 @@ chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopove
     $scope.popover.hide();
   };
   $rootScope.$on('currentChannelChanged', function(event, channel) {
-    $scope.subheader = channel.name;
+    if (channel == null) {
+      $scope.subheader = connectedSubHeaderTitle;
+    } else {
+      $scope.subheader = channel.name;
+    }
   });
 });
 
