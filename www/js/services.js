@@ -119,7 +119,10 @@ chatApp.factory('chatService', function($rootScope, $q) {
     if (window.AllJoyn) {
       chatSession.sendSignal(function() {
         channelsModel.currentChannel.messages.push(message);
-        $rootScope.$broadcast('newMessage', message);
+        var $rootScope = angular.element(document.body).scope().$root;
+        $rootScope.$apply(function() {
+          $rootScope.$broadcast('newMessage', message);
+        });
       }, function(status) {
         console.log('Failed to post to current channel: ' + status);
       }, null, null, [2, 0, 0, 0], "s", [message.text]);
