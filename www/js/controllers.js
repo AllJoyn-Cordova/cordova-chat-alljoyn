@@ -53,6 +53,11 @@ chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopove
       $scope.subheader = channel.name;
     }
   });
+
+  $scope.createChannelClicked = function($event) {
+    chatService.createChannel(this.newChannelName);
+    this.newChannelName = '';
+  };
 });
 
 chatApp.controller('ContentController', function($rootScope, $scope, chatService) {

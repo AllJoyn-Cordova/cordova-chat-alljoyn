@@ -49,6 +49,14 @@
                             {{channel.name}}
                         </ion-item>
                     </ion-list>
+                    <div class="item item-input-inset">
+                        <label class="item-input-wrapper">
+                            <input ng-model="newChannelName" type="text" placeholder="Channel name">
+                        </label>
+                        <button ng-click="createChannelClicked($event, $scope)" class="button button-small">
+                            Create
+                        </button>
+                    </div>
                 </ion-content>
             </ion-popover-view>
         </script>

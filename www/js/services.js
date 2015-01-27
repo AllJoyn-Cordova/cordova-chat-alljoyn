@@ -24,7 +24,8 @@ chatApp.factory('chatService', function($rootScope, $q) {
       },
       null
     ];
-    AllJoyn.registerObjects(function() {}, function() {}, null, proxyObjects);
+    var applicationObjects = proxyObjects;
+    AllJoyn.registerObjects(function() { }, function() { }, applicationObjects, proxyObjects);
   }
 
   var chatService = {};
@@ -117,15 +118,19 @@ chatApp.factory('chatService', function($rootScope, $q) {
 
   chatService.postCurrentChannel = function(message) {
     if (window.AllJoyn) {
+      var chatInterface = chatSession.sessionId === 0 ? [1, 0, 0, 0] : [2, 0, 0, 0];
       chatSession.sendSignal(function() {
         channelsModel.currentChannel.messages.push(message);
-        var $rootScope = angular.element(document.body).scope().$root;
-        $rootScope.$apply(function() {
-          $rootScope.$broadcast('newMessage', message);
-        });
+        $rootScope.$broadcast('newMessage', message);
+        // TODO: Below commented out code makes messages appear
+        // right away on iOS, but results into an error on Windows Phone
+        //var $rootScope = angular.element(document.body).scope().$root;
+        //$rootScope.$apply(function() {
+        //  $rootScope.$broadcast('newMessage', message);
+        //});
       }, function(status) {
         console.log('Failed to post to current channel: ' + status);
-      }, null, null, [2, 0, 0, 0], "s", [message.text]);
+      }, null, null, chatInterface, "s", [message.text]);
     } else {
       channelsModel.currentChannel.messages.push(message);
       $rootScope.$broadcast('newMessage', message);
@@ -172,6 +177,26 @@ chatApp.factory('chatService', function($rootScope, $q) {
       }, 500);
     }
   };
+
+  chatService.createChannel = function(channelName) {
+    var deferred = $q.defer();
+    var channelWellKnownName = AJ_CHAT_SERVICE_NAME + channelName;
+
+    if (window.AllJoyn) {
+      AllJoyn.startAdvertisingName(function() {
+        deferred.resolve();
+      }, function(status) {
+        console.log('Failed to start advertising name ' + channelWellKnownName + ' with status: ' + status);
+        deferred.reject();
+      }, channelWellKnownName, AJ_CHAT_SERVICE_PORT);
+    } else {
+      var channel = new Channel(channelName);
+      channelsModel.channels.push(channel);
+      $rootScope.$broadcast('channelsChanged');
+      deferred.resolve();
+    }
+    return deferred;
+  }
 
   return chatService;
 });
