@@ -45,8 +45,15 @@
                 <ion-content>
                     <progress ng-show="channels.length === 0"></progress>
                     <ion-list ng-show="channels.length > 0">
-                        <ion-item ng-click="channelSelected($event, channel)" ng-repeat="channel in channels">
+                        <ion-item ng-click="channelSelected($event, channel)"
+                                  ng-repeat="channel in channels"
+                                  class="item item-button-right">
                             {{channel.name}}
+                            <button ng-show="channel.selfHosted"
+                                    ng-click="deleteChannelClicked($event, channel)"
+                                    class="button">
+                                <i class="icon ion-close-round"></i>
+                            </button>
                         </ion-item>
                     </ion-list>
                     <div class="item item-input-inset">

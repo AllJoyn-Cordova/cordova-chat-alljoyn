@@ -11,9 +11,10 @@ chatApp.run(function($ionicPlatform) {
 // Define the common data types globally, because they
 // are used across the app
 
-function Channel (name) {
+function Channel (name, selfHosted) {
   this.name = name; // Currently assumed to be unique
   this.messages = [];
+  this.selfHosted = selfHosted || false;
 };
 
 function Message (text, nickname) {

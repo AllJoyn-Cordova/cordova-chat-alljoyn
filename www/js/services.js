@@ -72,13 +72,16 @@ chatApp.factory('chatService', function($rootScope, $q) {
       for (var i = 0; i < this.channels.length; i++) {
         if (this.channels[i].name == name) return this.channels[i];
       }
+      return null;
     },
     removeChannel: function(name) {
       for (var i = 0; i < this.channels.length; i++) {
         if (this.channels[i].name == name) {
           this.channels.splice(i, 1);
+          return true;
         }
       }
+      return false;
     }
   };
 
@@ -130,7 +133,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
         //});
       }, function(status) {
         console.log('Failed to post to current channel: ' + status);
-      }, null, null, chatInterface, "s", [message.text]);
+      }, null, null, [2, 0, 0, 0], "s", [message.text]);
     } else {
       channelsModel.currentChannel.messages.push(message);
       $rootScope.$broadcast('newMessage', message);
@@ -147,26 +150,33 @@ chatApp.factory('chatService', function($rootScope, $q) {
         function(advertisedNameObject) {
           channelName = advertisedNameObject.name.split('.').pop();
           console.log('Found channel with name: ' + channelName);
-          var channel = new Channel(channelName);
-          channelsModel.channels.push(channel);
-          var $rootScope = angular.element(document.body).scope().$root;
-          $rootScope.$apply(function() {
-            $rootScope.$broadcast('channelsChanged');
-          });
+          // Create the new channel only if it doesn't exist in the model
+          // yet. A scenario where channel already exists is self-hosted
+          // channels where we have already added the channel to the model
+          // when we get it advertised from the network.
+          if (channelsModel.getChannel(channelName) === null) {
+            var channel = new Channel(channelName);
+            channelsModel.channels.push(channel);
+            var $rootScope = angular.element(document.body).scope().$root;
+            $rootScope.$apply(function() {
+              $rootScope.$broadcast('channelsChanged');
+            });
+          }
         }
       );
       //AJ_Signal_Lost_Adv_Name
       chatBus.addListener([0, 1, 0, 2], 'sqs', function(response) {
         var channelName = response[0].split('.').pop();
-        channelsModel.removeChannel(channelName);
-        var $rootScope = angular.element(document.body).scope().$root;
-        $rootScope.$apply(function() {
-          $rootScope.$broadcast('channelsChanged');
-          if (channelsModel.currentChannel !== null && channelsModel.currentChannel.name == channelName) {
-            channelsModel.currentChannel = null;
-            $rootScope.$broadcast('currentChannelChanged', null);
-          }
-        });
+        if (channelsModel.removeChannel(channelName)) {
+          var $rootScope = angular.element(document.body).scope().$root;
+          $rootScope.$apply(function() {
+            $rootScope.$broadcast('channelsChanged');
+            if (channelsModel.currentChannel !== null && channelsModel.currentChannel.name == channelName) {
+              channelsModel.currentChannel = null;
+              $rootScope.$broadcast('currentChannelChanged', null);
+            }
+          });
+        }
       });
     }
     else {
@@ -184,14 +194,40 @@ chatApp.factory('chatService', function($rootScope, $q) {
 
     if (window.AllJoyn) {
       AllJoyn.startAdvertisingName(function() {
+        var channel = new Channel(channelName, true);
+        channelsModel.channels.push(channel);
+        var $rootScope = angular.element(document.body).scope().$root;
+        $rootScope.$apply(function() {
+          $rootScope.$broadcast('channelsChanged');
+        });
         deferred.resolve();
       }, function(status) {
         console.log('Failed to start advertising name ' + channelWellKnownName + ' with status: ' + status);
         deferred.reject();
       }, channelWellKnownName, AJ_CHAT_SERVICE_PORT);
     } else {
-      var channel = new Channel(channelName);
+      var channel = new Channel(channelName, true);
       channelsModel.channels.push(channel);
+      $rootScope.$broadcast('channelsChanged');
+      deferred.resolve();
+    }
+    return deferred;
+  }
+
+  chatService.removeChannel = function(channelName) {
+    var deferred = $q.defer();
+    var channelWellKnownName = AJ_CHAT_SERVICE_NAME + channelName;
+
+    if (window.AllJoyn) {
+      AllJoyn.stopAdvertisingName(function() {
+        channelsModel.removeChannel(channelName);
+        deferred.resolve();
+      }, function(status) {
+        console.log('Failed to stop advertising name ' + channelWellKnownName + ' with status: ' + status);
+        deferred.reject();
+      }, channelWellKnownName, AJ_CHAT_SERVICE_PORT);
+    } else {
+      channelsModel.removeChannel(channelName);
       $rootScope.$broadcast('channelsChanged');
       deferred.resolve();
     }

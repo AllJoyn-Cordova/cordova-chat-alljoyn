@@ -58,6 +58,11 @@ chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopove
     chatService.createChannel(this.newChannelName);
     this.newChannelName = '';
   };
+  $scope.deleteChannelClicked = function($event, channel) {
+    chatService.removeChannel(channel.name);
+    $event.preventDefault();
+    $event.stopPropagation();
+  };
 });
 
 chatApp.controller('ContentController', function($rootScope, $scope, chatService) {
