@@ -37,8 +37,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
         chatBus = bus;
         console.log('Found bus and connected.');
 
-        // Handler for new chat messages
-        chatBus.addListener([2, 0, 0, 0], 's', function(response) {
+        var chatMessageHandler = function(response) {
           if (channelsModel.currentChannel == null) return;
           var message = new Message(response[0]);
           // The $rootScope needs to be accessed in a "non-standard way"
@@ -49,7 +48,11 @@ chatApp.factory('chatService', function($rootScope, $q) {
             channelsModel.currentChannel.messages.push(message);
             $rootScope.$broadcast('newMessage', message);
           });
-        });
+        }
+        // Handler for new chat messages to sessions hosted by others
+        chatBus.addListener([2, 0, 0, 0], 's', chatMessageHandler);
+        // Handler for new chat messages to self-hosted sessions
+        chatBus.addListener([1, 0, 0, 0], 's', chatMessageHandler);
 
         deferred.resolve();
       }, function(status) {
