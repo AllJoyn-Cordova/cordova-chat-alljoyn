@@ -55,8 +55,15 @@ chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopove
   });
 
   $scope.createChannelClicked = function($event) {
-    chatService.createChannel(this.newChannelName);
-    this.newChannelName = '';
+    var channelName = this.newChannelName;
+    if (!channelName) {
+      $ionicPopup.alert({
+        title: 'Enter channel name'
+      });
+    } else {
+      chatService.createChannel(channelName);
+      this.newChannelName = '';
+    }
   };
   $scope.deleteChannelClicked = function($event, channel) {
     chatService.removeChannel(channel.name);
