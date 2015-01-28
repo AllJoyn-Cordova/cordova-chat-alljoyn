@@ -126,17 +126,17 @@ chatApp.factory('chatService', function($rootScope, $q) {
     if (window.AllJoyn) {
       var chatInterface = chatSession.sessionId === 0 ? [1, 0, 0, 0] : [2, 0, 0, 0];
       chatSession.sendSignal(function() {
-        channelsModel.currentChannel.messages.push(message);
-        $rootScope.$broadcast('newMessage', message);
-        // TODO: Below commented out code makes messages appear
-        // right away on iOS, but results into an error on Windows Phone
-        //var $rootScope = angular.element(document.body).scope().$root;
-        //$rootScope.$apply(function() {
-        //  $rootScope.$broadcast('newMessage', message);
-        //});
+        if (chatSession.sessionId === 0) {
+          // No need to push the message to the model here,
+          // because we are getting the new messages as signals
+          // from the router.
+        } else {
+          channelsModel.currentChannel.messages.push(message);
+          $rootScope.$broadcast('newMessage', message);
+        }
       }, function(status) {
         console.log('Failed to post to current channel: ' + status);
-      }, null, null, [2, 0, 0, 0], "s", [message.text]);
+      }, null, null, chatInterface, "s", [message.text]);
     } else {
       channelsModel.currentChannel.messages.push(message);
       $rootScope.$broadcast('newMessage', message);
