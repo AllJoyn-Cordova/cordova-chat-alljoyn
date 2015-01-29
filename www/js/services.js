@@ -101,25 +101,36 @@ chatApp.factory('chatService', function($rootScope, $q) {
     if (channelsModel.currentChannel != null && channel.name == channelsModel.currentChannel.name) {
       return;
     }
-    if (window.AllJoyn) {
-      if (chatSession !== null) {
-        chatSession.leave(function() {
-          console.log('Leaving a session with id: ' + chatSession.sessionId);
-          chatSession = null;
-        }, function() {
-          console.log('Failed to leave a session with id: ' + chatSession.sessionId);
-        });
-      }
-
+    var joinSession = function() {
       AllJoyn.joinSession(function(session) {
         console.log('Joined a session with id: ' + session.sessionId);
         chatSession = session;
+        channelsModel.currentChannel = channel;
+        $rootScope.$broadcast('currentChannelChanged', channel);
+        chatBus.addSignalRule(function() { }, function(status) {
+          console.log('Failed to add signal rule with status: ' + status);
+        }, 'Chat', 'org.alljoyn.bus.samples.chat');
       }, function(status) {
         console.log('Failed to join a session: ' + status);
       }, { name: AJ_CHAT_SERVICE_NAME + channel.name, port: AJ_CHAT_SERVICE_PORT });
     }
-    channelsModel.currentChannel = channel;
-    $rootScope.$broadcast('currentChannelChanged', channel);
+    if (window.AllJoyn) {
+      if (chatSession !== null) {
+        chatBus.removeSignalRule(function() {
+          chatSession.leave(function() {
+            console.log('Leaving a session with id: ' + chatSession.sessionId);
+            chatSession = null;
+            joinSession();
+          }, function() {
+            console.log('Failed to leave a session with id: ' + chatSession.sessionId);
+          });
+        }, function(status) {
+          console.log('Failed to remove signal rule with status: ' + status);
+        }, 'Chat', 'org.alljoyn.bus.samples.chat');
+      } else {
+        joinSession();
+      }
+    }
   };
 
   chatService.postCurrentChannel = function(message) {
