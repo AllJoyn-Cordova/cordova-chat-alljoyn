@@ -102,7 +102,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
       return;
     }
     var joinSession = function() {
-      AllJoyn.joinSession(function(session) {
+      chatBus.joinSession(function(session) {
         console.log('Joined a session with id: ' + session.sessionId);
         chatSession = session;
         channelsModel.currentChannel = channel;
@@ -160,7 +160,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
 
   chatService.startGettingChannels = function() {
     if (window.AllJoyn) {
-      AllJoyn.addAdvertisedNameListener(AJ_CHAT_SERVICE_NAME,
+      chatBus.addAdvertisedNameListener(AJ_CHAT_SERVICE_NAME,
         function(advertisedNameObject) {
           channelName = advertisedNameObject.name.split('.').pop();
           console.log('Found channel with name: ' + channelName);
@@ -207,7 +207,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
     var channelWellKnownName = AJ_CHAT_SERVICE_NAME + channelName;
 
     if (window.AllJoyn) {
-      AllJoyn.startAdvertisingName(function() {
+      chatBus.startAdvertisingName(function() {
         var channel = new Channel(channelName, true);
         channelsModel.channels.push(channel);
         var $rootScope = angular.element(document.body).scope().$root;
@@ -233,7 +233,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
     var channelWellKnownName = AJ_CHAT_SERVICE_NAME + channelName;
 
     if (window.AllJoyn) {
-      AllJoyn.stopAdvertisingName(function() {
+      chatBus.stopAdvertisingName(function() {
         channelsModel.removeChannel(channelName);
         deferred.resolve();
       }, function(status) {
