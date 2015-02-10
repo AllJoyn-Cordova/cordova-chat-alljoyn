@@ -1,14 +1,15 @@
 cordova-chat-alljoyn
 ====================
 
-A sample app using the Cordova plugin for AllJoyn.
+A sample app using the Cordova plugin for AllJoyn.  
 
-Building and running on Windows
+This application implements a simple chat service which allows peer to peer chat between to devices over AllJoyn.
+
+Building and Running on Windows
 -------------------------------
-This app uses an unreleased Cordova feature so to build and run with Cordova
-scripts, one must use a custom version of cordova-lib and cordova-cli. Below
-is how to get the required versions. The commands are such that they work in
-a command prompt like Git Bash.
+For Windows compilation, a pre-release copy of Cordova libraries is required until the next Cordova release.  One must use a custom version of cordova-lib and cordova-cli.
+
+This is how you clone the correct Cordova libraries:
 
 ```
 // Clone the right version of cordova-lib and cordova-cli
@@ -21,8 +22,10 @@ $ cd ../../cordova-cli && npm link cordova-lib && npm install
 ```
 
 Next, one can build and run this app using the custom Cordova scripts.
-Note that for the app to work, you need to have an AllJoyn router and a chat
-service running in the same network in which your app's target device is.
+
+For the app to work, you need to have an AllJoyn router and a chat
+service running in the same network.
+
 Perhaps easiest option is to download https://allseenalliance.org/releases/alljoyn/14.06.00/alljoyn-14.06.00a-win7x64vs2012-sdk.zip
 and run the binary from alljoyn-14.06.00a-win7x64vs2012-sdk-dbg/cpp/bin/samples/chat.exe on
 the same machine on which you run this Cordova chat app.
