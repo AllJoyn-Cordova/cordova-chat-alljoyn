@@ -9,6 +9,9 @@ Building and Running on Windows
 -------------------------------
 For Windows compilation, a pre-release copy of Cordova libraries is required until the next Cordova release.  One must use a custom version of cordova-lib and cordova-cli.
 
+This is related to the following bug, for which a fix is already tested and coming very soon.
+https://issues.apache.org/jira/browse/CB-8123
+
 This is how you clone the correct Cordova libraries:
 
 ```
@@ -23,12 +26,8 @@ $ cd ../../cordova-cli && npm link cordova-lib && npm install
 
 Next, one can build and run this app using the custom Cordova scripts.
 
-For the app to work, you need to have an AllJoyn router and a chat
-service running in the same network.
-
-Perhaps easiest option is to download https://allseenalliance.org/releases/alljoyn/14.06.00/alljoyn-14.06.00a-win7x64vs2012-sdk.zip
-and run the binary from alljoyn-14.06.00a-win7x64vs2012-sdk-dbg/cpp/bin/samples/chat.exe on
-the same machine on which you run this Cordova chat app.
+For the app to work, you need to have an AllJoyn router running in the same network.  Windows 10 preview includes a windows service you can enable to act as an AllJoyn router.  Another option is to download https://allseenalliance.org/releases/alljoyn/14.06.00/alljoyn-14.06.00a-win7x64vs2012-sdk.zip
+and run the binary from alljoyn-14.06.00a-win7x64vs2012-sdk-dbg/cpp/bin/samples/chat.exe on the network.
 
 ```
 // Navigate to the folder to which you cloned this app
