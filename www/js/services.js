@@ -1,6 +1,18 @@
+// The $rootScope needs to be accessed in a "non-standard way"
+// inside some callback functions or otherwise events are not getting broadcasted correctly.
+// Approach taken from:
+// http://stackoverflow.com/questions/24595460/how-to-access-update-rootscope-from-outside-angular
+var broadcastOnRootScope = function() {
+  var broadcastArguments = arguments;
+  var $rootScope = angular.element(document.body).scope().$root;
+  $rootScope.$apply(function() {
+    $rootScope.$broadcast.apply($rootScope, broadcastArguments);
+  });
+}
+
 var chatApp = angular.module('chatApp');
 
-chatApp.factory('chatService', function($rootScope, $q) {
+chatApp.factory('chatService', function($q) {
   // Initialize the AllJoyn chat session if the AllJoyn API
   // is available.
   if (window.AllJoyn) {
@@ -40,14 +52,8 @@ chatApp.factory('chatService', function($rootScope, $q) {
         var chatMessageHandler = function(response) {
           if (channelsModel.currentChannel == null) return;
           var message = new Message(response[0]);
-          // The $rootScope needs to be accessed in a "non-standard way"
-          // inside of this callback function or otherwise things don't work correctly.
-          // Approach taken from http://stackoverflow.com/questions/24595460/how-to-access-update-rootscope-from-outside-angular .
-          var $rootScope = angular.element(document.body).scope().$root;
-          $rootScope.$apply(function() {
-            channelsModel.currentChannel.messages.push(message);
-            $rootScope.$broadcast('newMessage', message);
-          });
+          channelsModel.currentChannel.messages.push(message);
+          broadcastOnRootScope('newMessage', message);
         }
         // Handler for new chat messages to sessions hosted by others
         chatBus.addListener([2, 0, 0, 0], 's', chatMessageHandler);
@@ -106,7 +112,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
         console.log('Joined a session with id: ' + session.sessionId);
         chatSession = session;
         channelsModel.currentChannel = channel;
-        $rootScope.$broadcast('currentChannelChanged', channel);
+        broadcastOnRootScope('currentChannelChanged', channel);
         chatBus.addSignalRule(function() { }, function(status) {
           console.log('Failed to add signal rule with status: ' + status);
         }, 'Chat', 'org.alljoyn.bus.samples.chat');
@@ -130,6 +136,9 @@ chatApp.factory('chatService', function($rootScope, $q) {
       } else {
         joinSession();
       }
+    } else {
+      channelsModel.currentChannel = channel;
+      broadcastOnRootScope('currentChannelChanged', channel);
     }
   };
 
@@ -143,14 +152,14 @@ chatApp.factory('chatService', function($rootScope, $q) {
           // from the router.
         } else {
           channelsModel.currentChannel.messages.push(message);
-          $rootScope.$broadcast('newMessage', message);
+          broadcastOnRootScope('newMessage', message);
         }
       }, function(status) {
         console.log('Failed to post to current channel: ' + status);
       }, null, null, chatInterface, "s", [message.text]);
     } else {
       channelsModel.currentChannel.messages.push(message);
-      $rootScope.$broadcast('newMessage', message);
+      broadcastOnRootScope('newMessage', message);
     }
   };
 
@@ -171,10 +180,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
           if (channelsModel.getChannel(channelName) === null) {
             var channel = new Channel(channelName);
             channelsModel.channels.push(channel);
-            var $rootScope = angular.element(document.body).scope().$root;
-            $rootScope.$apply(function() {
-              $rootScope.$broadcast('channelsChanged');
-            });
+            broadcastOnRootScope('channelsChanged');
           }
         }
       );
@@ -182,14 +188,11 @@ chatApp.factory('chatService', function($rootScope, $q) {
       chatBus.addListener([0, 1, 0, 2], 'sqs', function(response) {
         var channelName = response[0].split('.').pop();
         if (channelsModel.removeChannel(channelName)) {
-          var $rootScope = angular.element(document.body).scope().$root;
-          $rootScope.$apply(function() {
-            $rootScope.$broadcast('channelsChanged');
-            if (channelsModel.currentChannel !== null && channelsModel.currentChannel.name == channelName) {
-              channelsModel.currentChannel = null;
-              $rootScope.$broadcast('currentChannelChanged', null);
-            }
-          });
+          broadcastOnRootScope('channelsChanged');
+          if (channelsModel.currentChannel !== null && channelsModel.currentChannel.name == channelName) {
+            channelsModel.currentChannel = null;
+            broadcastOnRootScope('currentChannelChanged', null);
+          }
         }
       });
     }
@@ -197,7 +200,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
       setTimeout(function() {
         var channel = new Channel('My Channel');
         channelsModel.channels.push(channel);
-        $rootScope.$broadcast('channelsChanged');
+        broadcastOnRootScope('channelsChanged');
       }, 500);
     }
   };
@@ -210,10 +213,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
       chatBus.startAdvertisingName(function() {
         var channel = new Channel(channelName, true);
         channelsModel.channels.push(channel);
-        var $rootScope = angular.element(document.body).scope().$root;
-        $rootScope.$apply(function() {
-          $rootScope.$broadcast('channelsChanged');
-        });
+        broadcastOnRootScope('channelsChanged');
         deferred.resolve();
       }, function(status) {
         console.log('Failed to start advertising name ' + channelWellKnownName + ' with status: ' + status);
@@ -222,7 +222,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
     } else {
       var channel = new Channel(channelName, true);
       channelsModel.channels.push(channel);
-      $rootScope.$broadcast('channelsChanged');
+      broadcastOnRootScope('channelsChanged');
       deferred.resolve();
     }
     return deferred;
@@ -242,7 +242,7 @@ chatApp.factory('chatService', function($rootScope, $q) {
       }, channelWellKnownName, AJ_CHAT_SERVICE_PORT);
     } else {
       channelsModel.removeChannel(channelName);
-      $rootScope.$broadcast('channelsChanged');
+      broadcastOnRootScope('channelsChanged');
       deferred.resolve();
     }
     return deferred;
