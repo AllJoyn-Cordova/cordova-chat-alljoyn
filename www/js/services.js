@@ -5,9 +5,17 @@
 var broadcastOnRootScope = function() {
   var broadcastArguments = arguments;
   var $rootScope = angular.element(document.body).scope().$root;
-  $rootScope.$apply(function() {
+  // Prevent error by checking what phase $apply is in before calling it.
+  // Approach taken from:
+  // https://coderwall.com/p/ngisma/safe-apply-in-angular-js
+  var phase = $rootScope.$$phase;
+  if (phase == '$apply' || phase == '$digest') {
     $rootScope.$broadcast.apply($rootScope, broadcastArguments);
-  });
+  } else {
+    $rootScope.$apply(function() {
+      $rootScope.$broadcast.apply($rootScope, broadcastArguments);
+    });
+  }
 }
 
 var chatApp = angular.module('chatApp');
