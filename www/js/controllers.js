@@ -9,9 +9,9 @@ window.addEventListener('click', function(event) {
 
 var chatApp = angular.module('chatApp');
 
-chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopover, $ionicPopup, chatService) {
+chatApp.controller('HeaderController', function($scope, $ionicPopover, $ionicPopup, chatService) {
   $scope.channels = chatService.getChannels();
-  $rootScope.$on('channelsChanged', function() {
+  $scope.$on('channelsChanged', function() {
     $scope.channels = chatService.getChannels();
   });
 
@@ -46,7 +46,7 @@ chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopove
     chatService.setCurrentChannel(channel);
     $scope.popover.hide();
   };
-  $rootScope.$on('currentChannelChanged', function(event, channel) {
+  $scope.$on('currentChannelChanged', function(event, channel) {
     if (channel == null) {
       $scope.subheader = connectedSubHeaderTitle;
     } else {
@@ -72,17 +72,17 @@ chatApp.controller('HeaderController', function($rootScope, $scope, $ionicPopove
   };
 });
 
-chatApp.controller('ContentController', function($rootScope, $scope, chatService) {
+chatApp.controller('ContentController', function($scope, chatService) {
   $scope.messages = chatService.currentChannelMessages();
-  $rootScope.$on('newMessage', function(event, data) {
+  $scope.$on('newMessage', function(event, data) {
     $scope.messages = chatService.currentChannelMessages();
   });
-  $rootScope.$on('currentChannelChanged', function(event, channel) {
+  $scope.$on('currentChannelChanged', function(event, channel) {
     $scope.messages = chatService.currentChannelMessages();
   });
 });
 
-chatApp.controller('FooterController', function($rootScope, $scope, $ionicPopup, chatService) {
+chatApp.controller('FooterController', function($scope, $ionicPopup, chatService) {
   $scope.postMessage = function($event) {
     if (chatService.currentChannel() == null) {
       // Can't post if not on channel
