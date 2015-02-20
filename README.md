@@ -17,7 +17,7 @@ This is how you clone the correct Cordova libraries:
 ```
 // Clone the right version of cordova-lib and cordova-cli
 $ cd <local-folder-for-custom-cordova>
-$ git clone https://github.com/MSOpenTech/cordova-lib.git && git -C cordova-lib checkout CB-8123-final
+$ git clone https://github.com/apache/cordova-lib.git && git -C cordova-lib checkout a506acd3df34eed42336e5c627403004b0ff80f1
 $ git clone https://github.com/apache/cordova-cli.git && git -C cordova-cli checkout 4.2.0
 $ cd cordova-lib/cordova-lib
 $ npm install && npm link
