@@ -59,7 +59,7 @@ chatApp.factory('chatService', function($q) {
 
         var chatMessageHandler = function(response) {
           if (channelsModel.currentChannel == null) return;
-          var message = new Message(response[0]);
+          var message = new Message(response.arguments[0], response.sender);
           channelsModel.currentChannel.messages.push(message);
           broadcastOnRootScope('newMessage', message);
         }
@@ -194,7 +194,7 @@ chatApp.factory('chatService', function($q) {
       );
       //AJ_Signal_Lost_Adv_Name
       chatBus.addListener([0, 1, 0, 2], 'sqs', function(response) {
-        var channelName = response[0].split('.').pop();
+        var channelName = response.arguments[0].split('.').pop();
         if (channelsModel.removeChannel(channelName)) {
           broadcastOnRootScope('channelsChanged');
           if (channelsModel.currentChannel !== null && channelsModel.currentChannel.name == channelName) {
