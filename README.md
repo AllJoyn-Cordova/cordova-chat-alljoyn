@@ -5,6 +5,32 @@ A sample app using the Cordova plugin for AllJoyn.
 
 This application implements a simple chat service which allows peer to peer chat between to devices over AllJoyn.
 
+Building and Running
+--------------------
+
+(see below for Windows-specific instructions)
+
+Easiest way to build and run the app is to use the Cordova command-line tools. More information about installing and using the tools can be found from http://cordova.apache.org/docs/en/edge/guide_cli_index.md.html .
+
+This app depends on the AllJoyn plugin, which needs to be added first before the app works properly. From plugin repository, it can be installed like this:
+
+```
+$ cordova plugin add org.allseen.alljoyn
+```
+
+or directly from the Git repository like this:
+
+```
+$ cordova plugin add https://github.com/AllJoyn-Cordova/cordova-plugin-alljoyn.git
+```
+
+After that, you can add the platform you are interested in and run the app. As an example, here is how to run iOS version of the app:
+
+```
+$ cordova platform add ios
+$ cordova run ios
+```
+
 Building and Running on Windows
 -------------------------------
 For Windows compilation, a pre-release copy of Cordova libraries is required until the next Cordova release.  One must use a custom version of cordova-lib and cordova-cli.
