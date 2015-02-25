@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<widget id="net.vjrantal.alljoyncordovachat" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.example.alljoyn.chat" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
   <name>AllJoynCordovaChat</name>
   <description>
         A chat app that uses the Cordova AllJoyn plugin.
   </description>
-  <author email="ville.rantala@iki.fi" href="http://vjrantal.net/">
-    Ville Rantala
-  </author>
   <content src="index.html"/>
   <access origin="*"/>
   <preference name="webviewbounce" value="false"/>
