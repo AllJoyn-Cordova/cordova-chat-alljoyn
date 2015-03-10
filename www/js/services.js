@@ -68,6 +68,12 @@ chatApp.factory('chatService', function($q) {
         // Handler for new chat messages to self-hosted sessions
         chatBus.addListener([1, 0, 0, 0], 's', chatMessageHandler);
 
+        chatBus.acceptSessionListener = function(joinSessionRequest) {
+          var joinedChannelMessage = new Message(joinSessionRequest.sender + ' joined the channel', 'Channel');
+          chatService.postCurrentChannel(joinedChannelMessage);
+          joinSessionRequest.response(true);
+        };
+
         deferred.resolve();
       }, function(status) {
         console.log('Could not connect to the bus. Make sure your network has an AllJoyn router running and accessible to this application.');
