@@ -78,8 +78,10 @@
       </ion-list>
     </ion-content>
     <ion-footer-bar class="bar-stable" ng-controller="FooterController">
-      <input ng-model="message" type="text" placeholder="Message" />
-      <button class="button button-positive pull-right" ng-click="postMessage($event)">
+      <label class="footer-input-wrapper item-input-wrapper">
+        <input ng-model="message" type="text" placeholder="Message" />
+      </label>
+      <button class="footer-button button button-positive pull-right" ng-click="postMessage($event)">
         Send
       </button>
     </ion-footer-bar>

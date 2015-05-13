@@ -13,3 +13,14 @@ body {
   font-family: "Ionicons";
   src: url("/www/lib/ionic/fonts/ionicons.ttf") format("truetype");
 }
+
+.item-input-wrapper input {
+  flex-basis: 100%;
+  background: transparent;
+}
+.footer-input-wrapper {
+  flex: 0 0 75%;
+}
+.footer-button {
+  width: 20%;
+}
