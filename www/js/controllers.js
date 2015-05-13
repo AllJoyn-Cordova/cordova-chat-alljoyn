@@ -99,3 +99,18 @@ chatApp.controller('FooterController', function($scope, $ionicPopup, chatService
     }
   };
 });
+
+chatApp.controller('SettingsController', function ($scope, chatService) {
+  if (!window.AllJoyn) {
+    $scope.settings = [{
+      name: "Dummy content", checked: false
+    }];
+    $scope.settingChanged = function (setting) {
+      if (setting.checked) {
+        for (var i = 0; i < 100; i++) {
+          chatService.postCurrentChannel(new Message('Message content ' + i));
+        }
+      }
+    };
+  }
+});

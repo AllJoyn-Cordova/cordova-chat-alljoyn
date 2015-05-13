@@ -1,89 +1,123 @@
 ﻿<!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="format-detection" content="telephone=no" />
-    <meta name="msapplication-tap-highlight" content="no" />
-    <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
-    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
-    <title>AllJoyn Chat</title>
+<head>
+  <meta charset="utf-8">
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="msapplication-tap-highlight" content="no" />
+  <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+  <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+  <title>AllJoyn Chat</title>
 
-    <script src="js/winstore-jscompat.js"></script>
+  <script src="js/winstore-jscompat.js"></script>
 
-    <link href="lib/ionic/css/ionic.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
+  <link href="lib/ionic/css/ionic.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
 
-    <!-- IF using Sass (run gulp sass first), then uncomment below and remove the CSS includes above
-    <link href="css/ionic.app.css" rel="stylesheet">
-    -->
+  <!-- IF using Sass (run gulp sass first), then uncomment below and remove the CSS includes above
+  <link href="css/ionic.app.css" rel="stylesheet">
+  -->
+  <!-- ionic/angularjs js -->
+  <script src="lib/ionic/js/ionic.bundle.js"></script>
 
-    <!-- ionic/angularjs js -->
-    <script src="lib/ionic/js/ionic.bundle.js"></script>
+  <!-- cordova script (this will be a 404 during development) -->
+  <script src="cordova.js"></script>
 
-    <!-- cordova script (this will be a 404 during development) -->
-    <script src="cordova.js"></script>
+  <!-- your app's js -->
+  <script src="js/app.js"></script>
+  <script src="js/services.js"></script>
+  <script src="js/controllers.js"></script>
+</head>
+<body>
+  <ion-side-menus>
+    <ion-side-menu-content>
+      <ion-nav-bar class="bar-positive">
+        <ion-nav-buttons side="left">
+          <button class="button button-icon button-clear ion-navicon" menu-toggle="left"></button>
+        </ion-nav-buttons>
+      </ion-nav-bar>
 
-    <!-- your app's js -->
-    <script src="js/app.js"></script>
-    <script src="js/services.js"></script>
-    <script src="js/controllers.js"></script>
-  </head>
-  <body>
-    <div ng-controller="HeaderController">
-      <ion-header-bar class="bar-positive" no-tap-scroll="true">
-        <h1 class="title">AllJoyn Chat</h1>
-        <button class="button pull-right" ng-show="!connected" ng-click="connectClicked($event)">Connect</button>
-      </ion-header-bar>
-      <div class="bar bar-stable bar-subheader" no-tap-scroll="true">
-        <h2 class="title">{{subheader}}</h2>
-        <button ng-show="connected" class="button pull-right" ng-click="channelsClicked($event)">Channels</button>
-        <script id="channel-selector.html" type="text/ng-template">
+      <div ng-controller="HeaderController">
+        <ion-header-bar class="bar-positive" no-tap-scroll="true">
+          <h1 class="title">AllJoyn Chat</h1>
+        </ion-header-bar>
+        <div class="bar bar-stable bar-subheader" no-tap-scroll="true">
+          <h2 class="title">{{subheader}}</h2>
+          <button ng-show="!connected" class="button pull-right" ng-click="connectClicked($event)">Connect</button>
+          <button ng-show="connected" class="button pull-right" ng-click="channelsClicked($event)">Channels</button>
+          <script id="channel-selector.html" type="text/ng-template">
             <ion-popover-view>
-                <ion-header-bar>
-                    <h1 class="title">Select a channel</h1>
-                </ion-header-bar>
-                <ion-content>
-                    <progress ng-show="channels.length === 0"></progress>
-                    <ion-list ng-show="channels.length > 0">
-                        <ion-item ng-click="channelSelected($event, channel)"
-                                  ng-repeat="channel in channels"
-                                  class="item item-button-right">
-                            {{channel.name}}
-                            <button ng-show="channel.selfHosted"
-                                    ng-click="deleteChannelClicked($event, channel)"
-                                    class="button">
-                                <i class="icon ion-close-round"></i>
-                            </button>
-                        </ion-item>
-                    </ion-list>
-                    <div class="item item-input-inset">
-                        <label class="item-input-wrapper">
-                            <input ng-model="newChannelName" type="text" placeholder="Channel name">
-                        </label>
-                        <button ng-click="createChannelClicked($event, $scope)" class="button button-small">
-                            Create
-                        </button>
-                    </div>
-                </ion-content>
+              <ion-header-bar>
+                <h1 class="title">Select a channel</h1>
+              </ion-header-bar>
+              <ion-content>
+                <progress ng-show="channels.length === 0"></progress>
+                <ion-list ng-show="channels.length > 0">
+                  <ion-item ng-click="channelSelected($event, channel)"
+                            ng-repeat="channel in channels"
+                            class="item item-button-right">
+                    {{channel.name}}
+                    <button ng-show="channel.selfHosted"
+                            ng-click="deleteChannelClicked($event, channel)"
+                            class="button">
+                      <i class="icon ion-close-round"></i>
+                    </button>
+                  </ion-item>
+                </ion-list>
+                <div class="item item-input-inset">
+                  <label class="item-input-wrapper">
+                    <input ng-model="newChannelName" type="text" placeholder="Channel name">
+                  </label>
+                  <button ng-click="createChannelClicked($event, $scope)" class="button button-small">
+                    Create
+                  </button>
+                </div>
+              </ion-content>
             </ion-popover-view>
-        </script>
+          </script>
+        </div>
       </div>
-    </div>
-    <ion-content class="has-header has-footer has-subheader" has-bouncing="false" ng-controller="ContentController">
-      <ion-list>
-        <ion-item ng-repeat="message in messages">
-          <div class="message-header">{{message.nickname}} wrote:</div>
-          <div class="message-body">{{message.text}}</div>
-        </ion-item>
-      </ion-list>
-    </ion-content>
-    <ion-footer-bar class="bar-stable" ng-controller="FooterController">
-      <label class="footer-input-wrapper item-input-wrapper">
-        <input ng-model="message" type="text" placeholder="Message" />
-      </label>
-      <button class="footer-button button button-positive pull-right" ng-click="postMessage($event)">
-        Send
-      </button>
-    </ion-footer-bar>
-  </body>
+      <ion-content class="has-header has-footer has-subheader" has-bouncing="false" ng-controller="ContentController">
+        <ion-list>
+          <ion-item ng-repeat="message in messages">
+            <div class="message-header">{{message.nickname}} wrote:</div>
+            <div class="message-body">{{message.text}}</div>
+          </ion-item>
+        </ion-list>
+      </ion-content>
+      <ion-footer-bar class="bar-stable" ng-controller="FooterController">
+        <label class="footer-input-wrapper item-input-wrapper">
+          <input ng-model="message" type="text" placeholder="Message" />
+        </label>
+        <button class="footer-button button button-positive pull-right" ng-click="postMessage($event)">
+          Send
+        </button>
+      </ion-footer-bar>
+    </ion-side-menu-content>
+
+    <ion-side-menu side="left" expose-aside-when="large">
+      <ion-header-bar class="bar-assertive">
+        <h1 class="title">Settings</h1>
+      </ion-header-bar>
+      <ion-nav-view>
+        <ion-content ng-controller="SettingsController">
+          <ul class="list">
+            <li class="item item-toggle"
+                ng-repeat="setting in settings">
+              {{setting.name}}
+              <label class="toggle toggle-balanced">
+                <input type="checkbox"
+                       ng-model="setting.checked"
+                       ng-checked="setting.checked"
+                       ng-change="settingChanged(setting)" />
+                <div class="track">
+                  <div class="handle"></div>
+                </div>
+              </label>
+            </li>
+          </ul>
+        </ion-content>
+      </ion-nav-view>
+    </ion-side-menu>
+  </ion-side-menus>
+</body>
 </html>
