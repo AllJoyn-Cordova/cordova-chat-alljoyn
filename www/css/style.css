@@ -8,3 +8,8 @@ body {
 .message-header {
   font-style: italic;
 }
+
+@font-face {
+  font-family: "Ionicons";
+  src: url("/www/lib/ionic/fonts/ionicons.ttf") format("truetype");
+}
